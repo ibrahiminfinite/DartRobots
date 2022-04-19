@@ -1,13 +1,11 @@
 
 #include "TerrainGenerator.h"
-#include "PerlinNoise.h"
 #include <math.h>
 #include <Eigen/Dense>
 
 TerrainGenerator::TerrainGenerator()
 {
-    std::default_random_engine rd;
-    engine_ = std::mt19937(rd());
+
     uniformDist_ = std::uniform_real_distribution<float>(0.0,1.0);
 }
 
@@ -31,7 +29,15 @@ Terrain TerrainGenerator::generateHills(const TerrainConfig& config)
     size_t numVerticesY = (config.ySize / config.resolution) + 1;
 
 
+
     PerlinNoise noiseGenerator;
+    std::default_random_engine rd;
+
+    if(config.seed != -1)
+        noiseGenerator  = PerlinNoise(config.seed);
+        rd = std::default_random_engine(config.seed);
+        auto randomGen = std::mt19937(rd());
+
 
     Terrain terrain;
     float amp, freq, height{0};
@@ -53,7 +59,7 @@ Terrain TerrainGenerator::generateHills(const TerrainConfig& config)
             }
 
             // TODO : add roughness here
-            height += config.roughenss * uniformDist_(engine_);
+            height += config.roughenss * uniformDist_(randomGen);
             terrain.heights.emplace_back(height);
         }
     }
@@ -105,6 +111,12 @@ Terrain TerrainGenerator::generateSteps(const TerrainConfig &config)
     hmap.setZero();
 
 
+    std::default_random_engine rd;
+
+    if(config.seed != -1)
+            rd = std::default_random_engine(config.seed);
+            auto randomGen = std::mt19937(rd());
+
     // Loop through the squares with (VerticesPerSegment * VerticesPerSegment) vertices each
     float height;
     for(int i = 0; i < nSegmentsX; ++i)
@@ -112,7 +124,7 @@ Terrain TerrainGenerator::generateSteps(const TerrainConfig &config)
         for(int j = 0; j <nSegmentsY; ++j)
         {
             // set random height in range (0, 0.5)
-            height = uniformDist_(engine_) * config.stepHeight;
+            height = uniformDist_(randomGen) * config.stepHeight;
             hmap.block(i * VerticesPerSegment, j * VerticesPerSegment,
                           VerticesPerSegment, VerticesPerSegment).setConstant(height);
         }
